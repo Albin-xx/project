@@ -1,65 +1,66 @@
 #ifndef NEWSGROUP_H
 #define NEWSGROUP_H
 
-#include<string>
-#include<map>
+#include <string>
+#include <map>
 #include "article.h"
 
 namespace client_server {
     
-    /*
-     * Describes a newsgroup. A Newsgroup contains a number of Articles related to the same topic.
-     */
-    class Newsgroup{
 
-    public:
-	class NoArticleException{};
-	
-	typedef std::map<size_t, Article>::const_iterator article_const_iterator;
-	typedef std::map<size_t, Article>::iterator article_iterator;
+  class NoArticleException{};
 
-	// Create a new, empty Newsgroup. All Newsgroups must have a name.
-	Newsgroup(std::string name);
+  /*
+   * Describes a newsgroup. A Newsgroup contains a number of Articles related to the same topic.
+   */
+  class Newsgroup{
 
-	// Default constructor 
-	Newsgroup();
+  public:
+    typedef std::map<size_t, Article>::const_iterator article_const_iterator;
+    typedef std::map<size_t, Article>::iterator article_iterator;
 
-	std::string getName() const;
+    // Create a new, empty Newsgroup. All Newsgroups must have a name.
+    Newsgroup(std::string name);
 
-	const size_t getID() const;
+    // Default constructor 
+    Newsgroup();
 
-	const size_t numberOfArticles() const;
+    const std::string getName() const;
 
-	// Return an iterator to the first article in the newsgroup.
-	// The articles are ordered by date (ID number), oldest first.
-	article_const_iterator firstArticle() const;
+    const size_t getID() const;
 
-	// Return an iterator to one past the last article in the newsgroup.
-	// The articles are ordered by date (ID number), oldest first.
-	article_const_iterator endArticles() const;
+    const size_t numberOfArticles() const;
 
-	// Returns a reference to the article with ID-number ID if it exists in the newsgroup.
-	const Article& getArticle(size_t ID) const throw(NoArticleException);
+    // Return an iterator to the first article in the newsgroup.
+    // The articles are ordered by date (ID number), oldest first.
+    article_const_iterator firstArticle() const;
 
-	// Add an article to the newsgroup.
-	void addArticle(const Article& article);
+    // Return an iterator to one past the last article in the newsgroup.
+    // The articles are ordered by date (ID number), oldest first.
+    article_const_iterator endArticles() const;
+
+    // Returns a reference to the article with ID-number ID if it exists in the newsgroup.
+    const Article& getArticle(size_t ID) const throw(NoArticleException);
+
+    // Add an article to the newsgroup.
+    void addArticle(const Article& article);
     
-	// Delete an article from the newsgroup.
-	void deleteArticle(size_t ID) throw(NoArticleException);
+    // Delete an article from the newsgroup.
+    void deleteArticle(size_t ID) throw(NoArticleException);
 
 
-    private:
-	static size_t ID_count;
+  private:
+    static size_t ID_count;
 
-	// Unique identification number.
-	const size_t ID;
+    // Unique identification number.
+    const size_t ID;
     
-	// Name - uniqueness to be determined by the database.
-	const std::string name;
+    // Name - uniqueness to be determined by the database.
+    const std::string name;
     
-	// A map containing all the Articles.
-	std::map<size_t, Article> articles;
-    };
+    // A map containing all the Articles.
+    std::map<size_t, Article> articles;
+  };
 
 
 } // End namespace

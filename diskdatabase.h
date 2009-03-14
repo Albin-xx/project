@@ -1,24 +1,26 @@
-#ifndef DATABASE_H
-#define DATABASE_H
+#ifndef DISKDATABASE_H
+#define DISKDATABASE_H
 
 #include <vector>
+#include "databaseinterface.h"
 #include "newsgroup.h"
 #include "article.h"
-#include "databaseinterface.h"
+#include "dirent.h"
+#include "dir.h"
 
 namespace client_server {
 
   /*
-   * Class Database.
+   * Defines the base class for the Database classes.
    */
-  class Database : public DatabaseInterface{
+  class DiskDatabase : DatabaseInterface{
 	
   public:
 
-    typedef std::map<size_t, Newsgroup>::const_iterator newsgroup_const_iterator;
-    typedef std::map<size_t, Newsgroup>::iterator newsgroup_iterator;
-
-    Database(){}
+    // Creates a diskdatabase with the root of the 
+    // newsgroup-directory placed in directory..!
+    // directory can be either a relative or absolute address.
+    DiskDatabase(std::string directory);
 
     // Return the number of newsgroups in the database
     size_t numberOfNewsgroups() const;
@@ -55,11 +57,10 @@ namespace client_server {
     const Article& getArticle(size_t newsgroupID, size_t articleID) const throw(NoNewsgroupException, NoArticleException);
 
   private:
-    std::map<size_t, Newsgroup> groups;
-
-
+    void openRootDirectory(char* path);
+    DIR* root;
+    struct dirent* entry;
   };
 
 } // End namespace
-
 #endif

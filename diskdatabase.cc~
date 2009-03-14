@@ -1,0 +1,24 @@
+#include "diskdatabase.h"
+
+namespace client_server {
+  size_t numberOfNewsgroups() const;
+	
+  std::vector<size_t> listNewsgroupIDs() const;
+
+  std::vector<std::string> listNewsgroupNames() const;
+
+  std::vector<std::pair<size_t, std::string> > listNewsgroups() const;
+
+  void createNewsgroup(std::string name) throw(NewsgroupExistsException);
+	
+  void deleteNewsgroup(size_t ID) throw(NoNewsgroupException);
+
+  std::vector<std::pair<size_t, std::string> > listArticles(size_t newsgroupID)  const throw(NoNewsgroupException);
+
+  void createArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException);
+
+  void deleteArticle(size_t newsgroupID, size_t articleID)  throw(NoNewsgroupException, Newsgroup::NoArticleException);
+
+  const Article& getArticle(size_t newsgroupID, size_t articleID) const throw(NoNewsgroupException, Newsgroup::NoArticleException);
+
+}

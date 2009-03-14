@@ -18,7 +18,7 @@ namespace client_server {
 	: ID(ID_count++), name("")
     {}
 
-    std::string Newsgroup::getName() const
+    const std::string Newsgroup::getName() const
     {
 	return name;
     }
