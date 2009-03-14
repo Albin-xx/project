@@ -24,12 +24,12 @@ namespace client_server {
     }
 
 
-    const size_t Newsgroup::getID() const
+    const size_t& Newsgroup::getID() const
     {
 	return ID;
     }
 
-    const size_t Newsgroup::numberOfArticles() const
+    const size_t& Newsgroup::numberOfArticles() const
     {
 	return articles.size();
     }

@@ -27,9 +27,9 @@ namespace client_server {
 
     const std::string getName() const;
 
-    const size_t getID() const;
+    const size_t& getID() const;
 
-    const size_t numberOfArticles() const;
+    const size_t& numberOfArticles() const;
 
     // Return an iterator to the first article in the newsgroup.
     // The articles are ordered by date (ID number), oldest first.

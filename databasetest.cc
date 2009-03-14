@@ -1,4 +1,3 @@
-#include "database.h"
 #include "diskdatabase.h"
 
 int main() {

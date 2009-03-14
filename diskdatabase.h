@@ -5,8 +5,8 @@
 #include "databaseinterface.h"
 #include "newsgroup.h"
 #include "article.h"
-#include "dirent.h"
-#include "dir.h"
+#include <dirent.h>
+#include <sys/types.h>
 
 namespace client_server {
 
@@ -21,6 +21,10 @@ namespace client_server {
     // newsgroup-directory placed in directory..!
     // directory can be either a relative or absolute address.
     DiskDatabase(std::string directory);
+    
+    // Creates a diskdatabase with the root of the 
+    // newsgroup-directory placed in "newsgroups".
+    DiskDatabase();
 
     // Return the number of newsgroups in the database
     size_t numberOfNewsgroups() const;
@@ -54,10 +58,10 @@ namespace client_server {
     void deleteArticle(size_t newsgroupID, size_t articleID)  throw(NoNewsgroupException, NoArticleException);
 
     // Returns a specified article in a newsgroup.  
-    const Article& getArticle(size_t newsgroupID, size_t articleID) const throw(NoNewsgroupException, NoArticleException);
+    Article getArticle(size_t newsgroupID, size_t articleID) throw(NoNewsgroupException, NoArticleException);
 
   private:
-    void openRootDirectory(char* path);
+    void openRootDirectory(const char* path);
     DIR* root;
     struct dirent* entry;
   };
