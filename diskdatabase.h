@@ -20,11 +20,13 @@ namespace client_server {
     // Creates a diskdatabase with the root of the 
     // newsgroup-directory placed in directory..!
     // directory can be either a relative or absolute address.
-    DiskDatabase(std::string directory);
+    DiskDatabase(char* directory);
     
     // Creates a diskdatabase with the root of the 
     // newsgroup-directory placed in "newsgroups".
     DiskDatabase();
+
+    ~DiskDatabase();
 
     // Return the number of newsgroups in the database
     size_t numberOfNewsgroups() const;
@@ -62,8 +64,11 @@ namespace client_server {
 
   private:
     void openRootDirectory(const char* path);
+    void setHighestId();
+    const char* getNewsgroupPath(size_t id);
+    const char* rootPath;
+    size_t highestId;
     DIR* root;
-    struct dirent* entry;
   };
 
 } // End namespace
