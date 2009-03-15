@@ -13,7 +13,7 @@ namespace client_server {
   /*
    * Defines the base class for the Database classes.
    */
-  class DiskDatabase : DatabaseInterface{
+  class DiskDatabase : public DatabaseInterface{
 	
   public:
 
@@ -28,44 +28,27 @@ namespace client_server {
 
     ~DiskDatabase();
 
-    // Return the number of newsgroups in the database
     size_t numberOfNewsgroups() const;
-	
-    // Return a list of the identification numbers of the newsgroups
-    // in the database in increasing order.
-    std::vector<size_t> listNewsgroupIDs() const;
 
-    // Return a list of the names of the newsgroups in the database,
-    // ordered by identification numbers.
-    std::vector<std::string> listNewsgroupNames() const;
+    std::vector<Newsgroup> listNewsgroups() const;
 
-    // Return a list of the identification numbers and names of the
-    // newsgroups in the database ordered by increasing ID numbers
-    std::vector<std::pair<size_t, std::string> > listNewsgroups() const;
-
-    // Create a newsgroup.
     void createNewsgroup(std::string name) throw(NewsgroupExistsException);
-	
-    // Delete a newsgroup.
+
     void deleteNewsgroup(size_t ID) throw(NoNewsgroupException);
 
-    // Return a list of identification numbers and titles of the articles
-    // in the newsgroup with the specified ID number if it exists.
-    std::vector<std::pair<size_t, std::string> > listArticles(size_t newsgroupID)  const throw(NoNewsgroupException);
+    std::vector<Article> listArticles(size_t newsgroupID) throw(NoNewsgroupException);
 
-    // Add an article to the specified newsgroup.
     void createArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException);
 
-    // Delete an article in the specified newsgroup.
-    void deleteArticle(size_t newsgroupID, size_t articleID)  throw(NoNewsgroupException, NoArticleException);
+    void deleteArticle(size_t newsgroupID, size_t articleID) throw(NoNewsgroupException, NoArticleException);
 
-    // Returns a specified article in a newsgroup.  
     Article getArticle(size_t newsgroupID, size_t articleID) throw(NoNewsgroupException, NoArticleException);
 
   private:
     void openRootDirectory(const char* path);
     void setHighestId();
-    const char* getNewsgroupPath(size_t id);
+    std::string getNewsgroupPath(size_t id);
+    bool newsgroupExists(std::string name);
     const char* rootPath;
     size_t highestId;
     DIR* root;

@@ -84,48 +84,9 @@ namespace client_server {
     }
     return groups;
   }
-	
-  vector<size_t> DiskDatabase::listNewsgroupIDs() const {
-    vector<size_t> v;
-    struct dirent* entry;
-    while((entry = readdir(root))) {
-      if (entry->d_name[0] != '.' && entry->d_type == DT_DIR) {
-	string str(entry->d_name);
-	size_t sharp = str.find_last_of("#");
-	str.erase(0, ++sharp);
-	v.push_back(stringtosizet(str));
-      }
-    }
-    if (errno) {
-      int pError = errno;
-      errno = 0;
-      printf("An error occured, id: %d\n", pError);
-    }
-    return v;
-  }
 
-  vector<string> DiskDatabase::listNewsgroupNames() const {
-    vector<string> v;
-    rewinddir(root);
-    struct dirent* entry;
-    while((entry = readdir(root))) {
-      if (entry->d_name[0] != '.' && entry->d_type == DT_DIR) {
-	string str(entry->d_name);
-	size_t sharp = str.find_last_of("#");
-	str.erase(--sharp);
-	v.push_back(str);
-      }
-    }
-    if (errno) {
-      int pError = errno;
-      errno = 0;
-      printf("An error occured, id: %d\n", pError);
-    }
-    return v;
-  }
-
-  vector<pair<size_t, string> > DiskDatabase::listNewsgroups() const {
-    vector<pair<size_t, string> > v;
+  vector<Newsgroup> DiskDatabase::listNewsgroups() const {
+    vector<Newsgroup> v;
     rewinddir(root);
     struct dirent* entry;
     while((entry = readdir(root))) {
@@ -134,7 +95,7 @@ namespace client_server {
 	size_t sharp = str.find_last_of("#");
 	size_t id = stringtosizet(str.substr(++sharp));
 	str.erase(--sharp);
-	v.push_back(make_pair(id, str));
+	v.push_back(Newsgroup(id, str));
       }
     }
     if (errno) {
@@ -146,31 +107,35 @@ namespace client_server {
   }
 
   void DiskDatabase::createNewsgroup(string name) throw(NewsgroupExistsException) {
-     rewinddir(root);
-     name.insert(0, 1, '/');
-     name.insert(0, rootPath);
-     name += "#";
-     name += sizettostring(highestId);
-     DIR* prev = opendir(name.c_str());
-     if(!prev && errno == ENOENT) {
-       int res = mkdir(name.c_str(), 0700);
-       if (res) {
-	 int pError = errno;
-	 printf("An error occured, id: %d\n", pError);
-       } else {
-	 ++highestId;
-       }
-       errno=0;
-     } else {
-       errno=0;
-       closedir(prev);
-       throw NewsgroupExistsException();
-     }
+    if (newsgroupExists(name)) {
+      throw NewsgroupExistsException();
+    }
+    rewinddir(root);
+    name.insert(0, 1, '/');
+    name.insert(0, rootPath);
+    name += "#";
+    name += sizettostring(highestId);
+    DIR* prev = opendir(name.c_str());
+    if(!prev && errno == ENOENT) {
+      int res = mkdir(name.c_str(), 0700);
+      if (res) {
+	int pError = errno;
+	errno = 0;
+	printf("An error occured, id: %d\n", pError);
+      } else {
+	++highestId;
+      }
+      errno=0;
+    } else {
+      errno=0;
+      closedir(prev);
+      throw NewsgroupExistsException();
+    }
   }
 
-  const char* DiskDatabase::getNewsgroupPath(size_t id) {
+  string DiskDatabase::getNewsgroupPath(size_t id) {
     rewinddir(root);
-    const char* path = 0;
+    string path;
     struct dirent* entry;
     while((entry = readdir(root))) {
       if (entry->d_type == DT_DIR && entry->d_name[0] != '.') {
@@ -180,7 +145,7 @@ namespace client_server {
 	if (entryId == id) {
 	  str.insert(0, "/");
 	  str.insert(0, rootPath);
-	  path = str.c_str();
+	  path = str;
 	  break;
 	}
       }
@@ -192,16 +157,38 @@ namespace client_server {
     }
     return path;
   }
-	
-  void DiskDatabase::deleteNewsgroup(size_t ID) throw(NoNewsgroupException) {
-    const char* path = getNewsgroupPath(ID);
+
+  bool DiskDatabase::newsgroupExists(string name) {
     rewinddir(root);
     struct dirent* entry;
-    if(!path) {
+    while((entry = readdir(root))) {
+      if (entry->d_type == DT_DIR && entry->d_name[0] != '.') {
+	string str(entry->d_name);
+	size_t sharp = str.find_last_of("#");
+	str.erase(sharp);
+	if (str.compare(name) == 0) {
+	  return true;
+	}
+      }
+    }
+    if (errno) {
+      int pError = errno;
+      errno = 0;
+      printf("An error occured, id: %d\n", pError);
+    }
+    return false;
+  }
+	
+  void DiskDatabase::deleteNewsgroup(size_t ID) throw(NoNewsgroupException) {
+    string path(getNewsgroupPath(ID));
+    if(path.length() == 0) {
       throw NoNewsgroupException();
     }
-    
-    DIR* newsgroupRoot = opendir(path);
+    rewinddir(root);
+    struct dirent* entry;
+    printf("innan opendir Path: %s\n", path.c_str());
+    DIR* newsgroupRoot = opendir(path.c_str());
+    printf("Innan if Path: %s\n", path.c_str());
     if (!newsgroupRoot) {
       int pError = errno;
       errno = 0;
@@ -225,18 +212,50 @@ namespace client_server {
 	}
       }
       closedir(newsgroupRoot);
-      res = rmdir(path);
+      res = rmdir(path.c_str());
       if (errno || res) {
 	int pError = errno;
 	errno = 0;
-	printf("Could not remove newsgroup directory, result: %d\n Error id: %d\n",res, pError);
+	printf("Could not remove newsgroup directory, result: %d\nError id: %d\n",res, pError);
 	res = 0;
       }
     }
   }
 
-  vector<pair<size_t, string> > DiskDatabase::listArticles(size_t newsgroupID)  const throw(NoNewsgroupException) {
-    vector<pair<size_t, string> > v;
+  vector<Article> DiskDatabase::listArticles(size_t newsgroupID) throw(NoNewsgroupException) {
+    string path(getNewsgroupPath(newsgroupID));
+    if(path.length() == 0) {
+      throw NoNewsgroupException();
+    }
+    
+    rewinddir(root);
+    struct dirent* entry;
+    vector<Article> v;
+    DIR* newsgroupRoot = opendir(path.c_str());
+
+    if (!newsgroupRoot) {
+      int pError = errno;
+      errno = 0;
+      printf("An error occured, id: %d\n", pError);
+    } else {
+      while((entry = readdir(newsgroupRoot))) {
+	if (entry->d_type == DT_REG) {
+	  size_t id = stringtosizet(string(entry->d_name));
+	  /*
+
+	    KEEP ON SWINGIN DUUUDE..
+	  */
+	  v.push_back(Article(id, ""));
+	}
+      }
+      closedir(newsgroupRoot);
+      if (errno) {
+	int pError = errno;
+	errno = 0;
+	printf("Error occured while searching for directory: %d\n", pError);
+      }
+    }
+    
     return v;
   }
 
@@ -252,7 +271,7 @@ namespace client_server {
     string a("a");
     string b("b");
     string c("c");
-    Article d(a,b,c);
+    Article d(1, a,b,c);
     return d;
   }
 

@@ -20,16 +20,20 @@ namespace client_server {
     typedef std::map<size_t, Article>::iterator article_iterator;
 
     // Create a new, empty Newsgroup. All Newsgroups must have a name.
-    Newsgroup(std::string name);
+    Newsgroup(size_t id, std::string name);
 
     // Default constructor 
     Newsgroup();
+
+    Newsgroup(const Newsgroup& rhs);
+
+    Newsgroup& operator=(const Newsgroup& rhs);
 
     const std::string getName() const;
 
     const size_t& getID() const;
 
-    const size_t& numberOfArticles() const;
+    size_t numberOfArticles() const;
 
     // Return an iterator to the first article in the newsgroup.
     // The articles are ordered by date (ID number), oldest first.
@@ -53,10 +57,10 @@ namespace client_server {
     static size_t ID_count;
 
     // Unique identification number.
-    const size_t ID;
+    size_t ID;
     
     // Name - uniqueness to be determined by the database.
-    const std::string name;
+    std::string name;
     
     // A map containing all the Articles.
     std::map<size_t, Article> articles;
