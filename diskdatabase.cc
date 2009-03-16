@@ -247,15 +247,21 @@ namespace client_server {
       }
     } else {
       while((entry = readdir(newsgroupRoot))) {
-	if (entry->d_type == DT_REG) {
+	if (entry->d_type == DT_REG && entry->d_name[0] != 'n') {
 	  string str(entry->d_name);
-	  size_t sharp = str.find_last_of("#");
-	  size_t id = stringtosizet(str.substr(++sharp));
+	  size_t id = stringtosizet(str);
 	  ifstream ifs((path + entry->d_name).c_str());
 	  if(ifs.good()) {
 	    string title;
 	    getline(ifs, title);
-	    v.push_back(Article(id, title));
+	    string author;
+	    getline(ifs, author);
+	    string text;
+	    string line;
+	    while(getline(ifs, line)) {
+	      text += line;
+	    }
+	    v.push_back(Article(id, title, author, text));
 	  } else {
 	    printf("Could not read %s, ignoring\n", (path +entry->d_name).c_str());
 	  }
@@ -283,10 +289,9 @@ namespace client_server {
       printf("An error occured, id: %d\n", pError);
     } else {
       while((entry = readdir(newsgroupRoot))) {
-	if (entry->d_type == DT_REG) {
+	if (entry->d_type == DT_REG && entry->d_name[0] != 'n') {
 	  string str(entry->d_name);
-	  size_t sharp = str.find_last_of("#");
-	  size_t id = stringtosizet(str.substr(++sharp));
+	  size_t id = stringtosizet(str);
 	  if (id > highestId) {
 	    highestId = id;
 	  }
@@ -322,7 +327,7 @@ namespace client_server {
     path += "/";
     path += sizettostring(id);
     ofstream ofs(path.c_str());
-    if (ofs.bad()) {
+    if (ofs.good()) {
       ofs << article.getTitle() << "\n";
       ofs << article.getAuthor() << "\n";
       ofs << article.getText() << "\n";
@@ -350,10 +355,9 @@ namespace client_server {
       }
     } else {
       while((entry = readdir(newsgroupRoot))) {
-	if (entry->d_type == DT_REG) {
+	if (entry->d_type == DT_REG && entry->d_name[0] != 'n') {
 	  string str(entry->d_name);
-	  size_t sharp = str.find_last_of("#");
-	  size_t id = stringtosizet(str.substr(++sharp));
+	  size_t id = stringtosizet(str);
 	  if (id == articleID) {
 	    remove((path + entry->d_name).c_str());
 	    if (errno) {
@@ -361,8 +365,7 @@ namespace client_server {
 	      errno = 0;
 	      printf("fatal error occured while deleting article: %d\n", pError);
 	    }
-	    closedir(newsgroupRoot);
-	    break;
+	    return;
 	  }
 	}
       }
@@ -381,7 +384,7 @@ namespace client_server {
     string path = rootPath; 
     path += "/";
     path += sizettostring(newsgroupID);
-    Article* article;
+    Article* article = 0;
     rewinddir(root);
     struct dirent* entry;
     DIR* newsgroupRoot = opendir(path.c_str());
@@ -396,10 +399,9 @@ namespace client_server {
       }
     } else {
       while((entry = readdir(newsgroupRoot))) {
-	if (entry->d_type == DT_REG) {
+	if (entry->d_type == DT_REG && entry->d_name[0] != 'n') {
 	  string str(entry->d_name);
-	  size_t sharp = str.find_last_of("#");
-	  size_t id = stringtosizet(str.substr(++sharp));
+	  size_t id = stringtosizet(str);
 	  if (id == articleID) {
 	    ifstream ifs((path + entry->d_name).c_str());
 	    if(ifs.good()) {
@@ -418,7 +420,6 @@ namespace client_server {
 	      
 	    }
 	    ifs.close();
-	    closedir(newsgroupRoot);
 	    break;
 	  }
 	}
@@ -428,7 +429,8 @@ namespace client_server {
 	int pError = errno;
 	errno = 0;
 	printf("Error occured while reading article: %d\n", pError);
-      } else {
+      }
+      if(article == 0) {
 	throw NoArticleException();
       }
     }

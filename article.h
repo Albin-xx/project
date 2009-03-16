@@ -16,6 +16,8 @@ namespace client_server {
 
     Article(const size_t id, const std::string& title);
 
+    Article(const std::string& title, const std::string& author, const std::string& text);
+
     Article();
 
     size_t getID() const;
@@ -26,6 +28,9 @@ namespace client_server {
 
     const std::string& getText() const;
 
+    bool operator==(const Article& rhs);
+
+    bool operator!=(const Article& rhs);
 
   private:
     static size_t ID_count;

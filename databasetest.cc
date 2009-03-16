@@ -13,6 +13,8 @@ int main(int argc, char* argv[]) {
   } else {
     database = new DiskDatabase();
   }
+  
+  printf(" ------- NEWSGROUPS --------- \n");
 
   size_t size = database->numberOfNewsgroups();
   printf("Number of newsgroups %d, expected %d\n", static_cast<int>(size), 0);
@@ -37,6 +39,10 @@ int main(int argc, char* argv[]) {
     printf("Database threw NewsgroupExistsException, as expected!\n");
   }
   
+
+
+
+
   printf("Newsgrouplist:\n");
   vector<Newsgroup> result = database->listNewsgroups();
   vector<Newsgroup>::const_iterator it = result.begin();
@@ -46,7 +52,91 @@ int main(int argc, char* argv[]) {
     ++it;
   }
 
-  printf("Delete newsgroups:\n");
+  printf(" -------- ARTICLES ---------- \n");
+  try {
+    printf("Get non-existing article with id #1 from existing newsgroup #0\n");
+    Article art = database->getArticle(0,1);
+    printf("Error, could fetch a non-existing article!!\n");
+  } catch (NoArticleException ex) {
+    printf("Database threw NoArticleException, as expected!\n");
+  }
+
+  try {
+    printf("Get non-existing article with id #1 from non-existing newsgroup #3\n");
+    Article art = database->getArticle(3,1);
+    printf("Error, could fetch a non-existing article from a non-existing newsgroup!!!\n");
+  } catch (NoNewsgroupException ex) {
+    printf("Database threw NoNewsgroupException , as expected!\n");
+  }
+
+  try {
+    printf("Create article with non-existing newsgroup #3\n");
+    Article art(string("blub"), string("blab"), string("bleb"));
+    database->createArticle(3,art);
+    printf("Error, could create an article with a non-existing newsgroup!!!\n");
+  } catch (NoNewsgroupException ex) {
+    printf("Database threw NoNewsgroupException , as expected!\n");
+  }
+
+  
+  printf("Create article with existing newsgroup #0\n");
+  Article art1(string("blub1"), string("blab1"), string("bleb1"));
+  database->createArticle(0,art1);
+
+  printf("Create article with existing newsgroup #1\n");
+  Article art2(string("blub2"), string("blab2"), string("bleb2"));
+  database->createArticle(1,art2);
+
+  printf("Create article with existing newsgroup #1\n");
+  Article art3(string("blub3"), string("blab3"), string("bleb3"));
+  database->createArticle(1,art3);
+
+  printf("Create article with existing newsgroup #1\n");
+  Article art4(string("blub4"), string("blab4"), string("bleb4"));
+  database->createArticle(1,art4);
+
+  printf("Get first article with id 1 from newsgroup #0\n");
+  Article res1 = database->getArticle(0,1);
+
+  if (res1 == art1) {
+    printf("Inserted and fetched article match!\n");
+  } else {
+    printf("Inserted and fetched article mismatch!\n");
+  }
+
+  printf("List articles in newsgroup #1\n");
+
+  vector<Article> articles = database->listArticles(1);
+  vector<Article>::iterator ita = articles.begin();
+  while(ita != articles.end()) {
+    printf("Article #%d\nTitle: %s\nAuthor: %s\nText: %s\n",
+	   static_cast<int>((*ita).getID()),
+	   (*ita).getTitle().c_str(),
+	   (*ita).getAuthor().c_str(),
+	   (*ita).getText().c_str());
+    ++ita;
+  }
+
+  try {
+    printf("Delete non-existing article with id #2 from existing newsgroup #0\n");
+    database->deleteArticle(0,2);
+    printf("Error, could delete a non-existing article!!\n");
+  } catch (NoArticleException ex) {
+    printf("Database threw NoArticleException, as expected!\n");
+  }
+
+  try {
+    printf("Delete non-existing article with id #1 from non-existing newsgroup #3\n");
+    database->getArticle(3,1);
+    printf("Error, could delete a non-existing article from a non-existing newsgroup!!!\n");
+  } catch (NoNewsgroupException ex) {
+    printf("Database threw NoNewsgroupException , as expected!\n");
+  }
+
+  printf("Delete existing article with id #1 from existing newsgroup #0\n");
+  database->deleteArticle(0,1);
+
+  printf("Delete newsgroups: (with articles!)\n");
   result = database->listNewsgroups();
   it = result.begin();
   while(it != result.end()) {
