@@ -11,6 +11,9 @@ namespace client_server {
   Article::Article(const size_t id, const std::string& title)
     : ID(id), title(title), author(), text() {}
 
+  Article::Article()
+    : ID(), title(), author(), text() {}
+
   size_t Article::getID() const
   {
     return ID;

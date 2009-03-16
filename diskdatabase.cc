@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <vector>
 #include <utility>
+#include <iostream>
+#include <fstream>
 using namespace std;
 
 namespace client_server {
@@ -25,7 +27,7 @@ namespace client_server {
   void DiskDatabase::openRootDirectory(const char* path) {
     int res = 0;
     root = opendir(path);
-    rootPath = path;
+    rootPath = string(path);
     if (!root) {
       printf("Could not open default root-directory \"%s\",\nwill try to create it..\n",
 	     path);
@@ -54,7 +56,10 @@ namespace client_server {
 	string str(entry->d_name);
 	size_t sharp = str.find_last_of("#");
 	str.erase(0, ++sharp);
-	highestId = stringtosizet(str);
+	size_t id = stringtosizet(str);
+	if (id > highestId) {
+	  highestId = id;
+	}
       }
     }
     if (errno) {
@@ -91,11 +96,19 @@ namespace client_server {
     struct dirent* entry;
     while((entry = readdir(root))) {
       if (entry->d_name[0] != '.' && entry->d_type == DT_DIR) {
-	string str(entry->d_name);
-	size_t sharp = str.find_last_of("#");
-	size_t id = stringtosizet(str.substr(++sharp));
-	str.erase(--sharp);
-	v.push_back(Newsgroup(id, str));
+	size_t id = stringtosizet(string(entry->d_name));
+	string title;
+	ifstream ifs((rootPath + "/" + entry->d_name + "/newsgroup").c_str());
+	if (ifs.good()) {
+	  string line;
+	  while(getline(ifs,line)) {
+	    title += line;
+	  }
+	  v.push_back(Newsgroup(id, title));
+	} else {
+	  printf("Error, could not read newsgroupdata: %s\n",(rootPath + "/" + entry->d_name + "/newsgroup").c_str());
+	}
+	ifs.close();
       }
     }
     if (errno) {
@@ -111,64 +124,55 @@ namespace client_server {
       throw NewsgroupExistsException();
     }
     rewinddir(root);
-    name.insert(0, 1, '/');
-    name.insert(0, rootPath);
-    name += "#";
-    name += sizettostring(highestId);
-    DIR* prev = opendir(name.c_str());
+    string dirName = rootPath;
+    dirName += "/";
+    dirName += sizettostring(highestId);
+    DIR* prev = opendir(dirName.c_str());
     if(!prev && errno == ENOENT) {
-      int res = mkdir(name.c_str(), 0700);
+      int res = mkdir(dirName.c_str(), 0700);
       if (res) {
 	int pError = errno;
 	errno = 0;
-	printf("An error occured, id: %d\n", pError);
+	printf("An error occured while making newsgroup directory, id: %d\n", pError);
       } else {
-	++highestId;
+	ofstream ofs((dirName + "/newsgroup").c_str());
+	if (ofs.good()) {
+	  ofs << name;
+	  ++highestId;
+	} else {
+	  printf("Could not open/create newsgroupdata: %s\n", (dirName + "/newsgroup").c_str());
+	}
+	ofs.close();	
       }
+      closedir(prev);
       errno=0;
     } else {
-      errno=0;
       closedir(prev);
+      errno=0;
       throw NewsgroupExistsException();
     }
-  }
-
-  string DiskDatabase::getNewsgroupPath(size_t id) {
-    rewinddir(root);
-    string path;
-    struct dirent* entry;
-    while((entry = readdir(root))) {
-      if (entry->d_type == DT_DIR && entry->d_name[0] != '.') {
-	string str(entry->d_name);
-	size_t sharp = str.find_last_of("#");
-	size_t entryId = stringtosizet(str.substr(++sharp));
-	if (entryId == id) {
-	  str.insert(0, "/");
-	  str.insert(0, rootPath);
-	  path = str;
-	  break;
-	}
-      }
-    }
-    if (errno) {
-      int pError = errno;
-      errno = 0;
-      printf("An error occured, id: %d\n", pError);
-    }
-    return path;
   }
 
   bool DiskDatabase::newsgroupExists(string name) {
     rewinddir(root);
     struct dirent* entry;
+    bool rtr = false;
     while((entry = readdir(root))) {
       if (entry->d_type == DT_DIR && entry->d_name[0] != '.') {
-	string str(entry->d_name);
-	size_t sharp = str.find_last_of("#");
-	str.erase(sharp);
-	if (str.compare(name) == 0) {
-	  return true;
+	string title;
+	ifstream ifs((rootPath + "/" + entry->d_name + "/newsgroup").c_str());
+	if (ifs.good()) {
+	  string line;
+	  while(getline(ifs,line)) {
+	    title += line;
+	  }
+	  if (title.compare(name) == 0) {
+	    rtr = true;
+	  }
+	} else {
+	  printf("Error, could not read newsgroupdata: %s\n",(rootPath + "/" + entry->d_name + "/newsgroup").c_str());
 	}
+	ifs.close();
       }
     }
     if (errno) {
@@ -176,23 +180,24 @@ namespace client_server {
       errno = 0;
       printf("An error occured, id: %d\n", pError);
     }
-    return false;
+    return rtr;
   }
 	
   void DiskDatabase::deleteNewsgroup(size_t ID) throw(NoNewsgroupException) {
-    string path(getNewsgroupPath(ID));
-    if(path.length() == 0) {
-      throw NoNewsgroupException();
-    }
+    string path = rootPath; 
+    path += "/";
+    path += sizettostring(ID);
     rewinddir(root);
     struct dirent* entry;
-    printf("innan opendir Path: %s\n", path.c_str());
     DIR* newsgroupRoot = opendir(path.c_str());
-    printf("Innan if Path: %s\n", path.c_str());
     if (!newsgroupRoot) {
       int pError = errno;
       errno = 0;
-      printf("An error occured, id: %d\n", pError);
+      if (pError == ENOENT) {
+	 throw NoNewsgroupException();
+      } else {
+	printf("An error occured, id: %d\n", pError);
+      }
     } else {
       int res = 0;
       while((entry = readdir(newsgroupRoot))) {
@@ -223,16 +228,55 @@ namespace client_server {
   }
 
   vector<Article> DiskDatabase::listArticles(size_t newsgroupID) throw(NoNewsgroupException) {
-    string path(getNewsgroupPath(newsgroupID));
-    if(path.length() == 0) {
-      throw NoNewsgroupException();
-    }
+    string path = rootPath; 
+    path += "/";
+    path += sizettostring(newsgroupID);
     
     rewinddir(root);
     struct dirent* entry;
     vector<Article> v;
     DIR* newsgroupRoot = opendir(path.c_str());
+    path += "/";
+    if (!newsgroupRoot) {
+      int pError = errno;
+      errno = 0;
+     if (pError == ENOENT) {
+	 throw NoNewsgroupException();
+      } else {
+	printf("An error occured, id: %d\n", pError);
+      }
+    } else {
+      while((entry = readdir(newsgroupRoot))) {
+	if (entry->d_type == DT_REG) {
+	  string str(entry->d_name);
+	  size_t sharp = str.find_last_of("#");
+	  size_t id = stringtosizet(str.substr(++sharp));
+	  ifstream ifs((path + entry->d_name).c_str());
+	  if(ifs.good()) {
+	    string title;
+	    getline(ifs, title);
+	    v.push_back(Article(id, title));
+	  } else {
+	    printf("Could not read %s, ignoring\n", (path +entry->d_name).c_str());
+	  }
+	  ifs.close();
+	}
+      }
+      closedir(newsgroupRoot);
+      if (errno) {
+	int pError = errno;
+	errno = 0;
+	printf("Error occured while listing articles: %d\n", pError);
+      }
+    }
+    
+    return v;
+  }
 
+  size_t DiskDatabase::getNextArticleId(string newsgroupPath) {
+    size_t highestId = 0;
+    struct dirent* entry;
+    DIR* newsgroupRoot = opendir(newsgroupPath.c_str());
     if (!newsgroupRoot) {
       int pError = errno;
       errno = 0;
@@ -240,39 +284,155 @@ namespace client_server {
     } else {
       while((entry = readdir(newsgroupRoot))) {
 	if (entry->d_type == DT_REG) {
-	  size_t id = stringtosizet(string(entry->d_name));
-	  /*
-
-	    KEEP ON SWINGIN DUUUDE..
-	  */
-	  v.push_back(Article(id, ""));
+	  string str(entry->d_name);
+	  size_t sharp = str.find_last_of("#");
+	  size_t id = stringtosizet(str.substr(++sharp));
+	  if (id > highestId) {
+	    highestId = id;
+	  }
 	}
       }
       closedir(newsgroupRoot);
       if (errno) {
 	int pError = errno;
 	errno = 0;
-	printf("Error occured while searching for directory: %d\n", pError);
+	printf("Error occured while fetching highest article id: %d\n", pError);
       }
     }
-    
-    return v;
+    return ++highestId;
   }
 
   void DiskDatabase::createArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException) {
-
+    string path = rootPath; 
+    path += "/";
+    path += sizettostring(newsgroupID);
+    DIR* newsgroupRoot = opendir(path.c_str());
+    if (!newsgroupRoot) {
+      int pError = errno;
+      errno = 0;
+      if (pError == ENOENT) {
+	 throw NoNewsgroupException();
+      } else {
+	printf("An error occured, id: %d\n", pError);
+      }
+    }
+    closedir(newsgroupRoot);
+    errno = 0;
+    size_t id = getNextArticleId(path);
+    path += "/";
+    path += sizettostring(id);
+    ofstream ofs(path.c_str());
+    if (ofs.bad()) {
+      ofs << article.getTitle() << "\n";
+      ofs << article.getAuthor() << "\n";
+      ofs << article.getText() << "\n";
+    } else {
+      printf("Could not open %s for writing, error!\n", path.c_str());
+    }
+    ofs.close();
   }
 
   void DiskDatabase::deleteArticle(size_t newsgroupID, size_t articleID)  throw(NoNewsgroupException, NoArticleException) {
-
+    string path = rootPath; 
+    path += "/";
+    path += sizettostring(newsgroupID);
+    rewinddir(root);
+    struct dirent* entry;
+    DIR* newsgroupRoot = opendir(path.c_str());
+    path += "/";
+    if (!newsgroupRoot) {
+      int pError = errno;
+      errno = 0;
+      if (pError == ENOENT) {
+	 throw NoNewsgroupException();
+      } else {
+	printf("An error occured, id: %d\n", pError);
+      }
+    } else {
+      while((entry = readdir(newsgroupRoot))) {
+	if (entry->d_type == DT_REG) {
+	  string str(entry->d_name);
+	  size_t sharp = str.find_last_of("#");
+	  size_t id = stringtosizet(str.substr(++sharp));
+	  if (id == articleID) {
+	    remove((path + entry->d_name).c_str());
+	    if (errno) {
+	      int pError = errno;
+	      errno = 0;
+	      printf("fatal error occured while deleting article: %d\n", pError);
+	    }
+	    closedir(newsgroupRoot);
+	    break;
+	  }
+	}
+      }
+      closedir(newsgroupRoot);
+      if (errno) {
+	int pError = errno;
+	errno = 0;
+	printf("Error occured while deleting articles: %d\n", pError);
+      } else {
+	throw NoArticleException();
+      }
+    }
   }
 
   Article DiskDatabase::getArticle(size_t newsgroupID, size_t articleID) throw(NoNewsgroupException, NoArticleException) {
-    string a("a");
-    string b("b");
-    string c("c");
-    Article d(1, a,b,c);
-    return d;
+    string path = rootPath; 
+    path += "/";
+    path += sizettostring(newsgroupID);
+    Article* article;
+    rewinddir(root);
+    struct dirent* entry;
+    DIR* newsgroupRoot = opendir(path.c_str());
+    path += "/";
+    if (!newsgroupRoot) {
+      int pError = errno;
+      errno = 0;
+      if (pError == ENOENT) {
+	 throw NoNewsgroupException();
+      } else {
+	printf("An error occured, id: %d\n", pError);
+      }
+    } else {
+      while((entry = readdir(newsgroupRoot))) {
+	if (entry->d_type == DT_REG) {
+	  string str(entry->d_name);
+	  size_t sharp = str.find_last_of("#");
+	  size_t id = stringtosizet(str.substr(++sharp));
+	  if (id == articleID) {
+	    ifstream ifs((path + entry->d_name).c_str());
+	    if(ifs.good()) {
+	      string title;
+	      getline(ifs, title);
+	      string author;
+	      getline(ifs, author);
+	      string text;
+	      string line;
+	      while(getline(ifs, line)) {
+		text += line;
+	      }
+	      article = new Article(id, title, author, text);
+	    } else {
+	      printf("Could not read %s, ignoring\n", (path +entry->d_name).c_str());
+	      
+	    }
+	    ifs.close();
+	    closedir(newsgroupRoot);
+	    break;
+	  }
+	}
+      }
+      closedir(newsgroupRoot);
+      if (errno) {
+	int pError = errno;
+	errno = 0;
+	printf("Error occured while reading article: %d\n", pError);
+      } else {
+	throw NoArticleException();
+      }
+    }
+    return *article;
   }
 
 }

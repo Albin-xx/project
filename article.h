@@ -16,6 +16,8 @@ namespace client_server {
 
     Article(const size_t id, const std::string& title);
 
+    Article();
+
     size_t getID() const;
 
     const std::string& getTitle() const;

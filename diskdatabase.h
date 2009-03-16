@@ -49,7 +49,8 @@ namespace client_server {
     void setHighestId();
     std::string getNewsgroupPath(size_t id);
     bool newsgroupExists(std::string name);
-    const char* rootPath;
+    size_t getNextArticleId(std::string newsgroupPath);
+    std::string rootPath;
     size_t highestId;
     DIR* root;
   };
