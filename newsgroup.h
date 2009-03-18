@@ -16,9 +16,6 @@ namespace client_server {
   class Newsgroup{
 
   public:
-    typedef std::map<size_t, Article>::const_iterator article_const_iterator;
-    typedef std::map<size_t, Article>::iterator article_iterator;
-
     // Create a new, empty Newsgroup. All Newsgroups must have a name.
     Newsgroup(size_t id, std::string name);
 
@@ -35,13 +32,13 @@ namespace client_server {
 
     size_t numberOfArticles() const;
 
-    // Return an iterator to the first article in the newsgroup.
+    // Return an iterator to the first <articleID, article> pair in the newsgroup.
     // The articles are ordered by date (ID number), oldest first.
-    article_const_iterator firstArticle() const;
+    std::map<size_t, Article>::const_iterator firstPair() const;
 
-    // Return an iterator to one past the last article in the newsgroup.
+    // Return an iterator to one past the last <articleID, article> pair in the newsgroup.
     // The articles are ordered by date (ID number), oldest first.
-    article_const_iterator endArticles() const;
+    std::map<size_t, Article>::const_iterator endPair() const;
 
     // Returns a reference to the article with ID-number ID if it exists in the newsgroup.
     const Article& getArticle(size_t ID) const throw(NoArticleException);
@@ -54,7 +51,7 @@ namespace client_server {
 
 
   private:
-    static size_t ID_count;
+//    static size_t ID_count;
 
     // Unique identification number.
     size_t ID;

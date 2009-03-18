@@ -38,7 +38,7 @@ namespace client_server {
 
     std::vector<Article> listArticles(size_t newsgroupID) throw(NoNewsgroupException);
 
-    void createArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException);
+    void addArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException);
 
     void deleteArticle(size_t newsgroupID, size_t articleID) throw(NoNewsgroupException, NoArticleException);
 

@@ -10,8 +10,8 @@ CC      = g++
 #CPPFLAGS  = -DNDEBUG
 CXXFLAGS  = -pipe -O2 -Wall -W -ansi -pedantic-errors
 CXXFLAGS += -Wmissing-braces -Wparentheses -Wold-style-cast
-#CXXFLAGS += -ggdb
-#LDFLAGS = -ggdb
+CXXFLAGS += -ggdb
+LDFLAGS = -ggdb
 
 # Sources and object files
 SRC	= $(wildcard *.cc)
@@ -22,7 +22,7 @@ PROGS	= databasetest
 
 all: $(PROGS)
 
-databasetest: databasetest.o diskdatabase.o databaseinterface.o article.o newsgroup.o util.o
+databasetest: databasetest.o diskdatabase.o database.o databaseinterface.o article.o newsgroup.o util.o
 
 clean:
 	rm -f *.o

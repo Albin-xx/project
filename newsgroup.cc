@@ -3,10 +3,10 @@
 
 namespace client_server {
 
-  typedef Newsgroup::article_const_iterator article_const_iterator;
-  typedef Newsgroup::article_iterator article_iterator;
+//  typedef Newsgroup::article_const_iterator article_const_iterator;
+//  typedef Newsgroup::article_iterator article_iterator;
 
-  size_t Newsgroup::ID_count = 0;  // Initialize the identification number counter.
+//  size_t Newsgroup::ID_count = 0;  // Initialize the identification number counter.
 
   // Create a new, empty Newsgroup. All Newsgroups must have a name.
   Newsgroup::Newsgroup(size_t id, std::string name)
@@ -15,7 +15,7 @@ namespace client_server {
 
   // Default constructor 
   Newsgroup::Newsgroup()
-    : ID(ID_count++), name("")
+    : ID(), name()
   {}
 
   Newsgroup::Newsgroup(const Newsgroup& rhs) {
@@ -49,14 +49,14 @@ namespace client_server {
 
   // Return an iterator to the first article in the newsgroup.
   // The articles are ordered by date (ID number), oldest first.
-  article_const_iterator Newsgroup::firstArticle() const
+    std::map<size_t, Article>::const_iterator Newsgroup::firstPair() const
   {
     return articles.begin();
   }
 
   // Return an iterator to one past the last article in the newsgroup.
   // The articles are ordered by date (ID number), oldest first.
-  article_const_iterator Newsgroup::endArticles() const
+  std::map<size_t, Article>::const_iterator Newsgroup::endPair() const
   {
     return articles.end();
   }
@@ -65,7 +65,7 @@ namespace client_server {
   // Returns a reference to the article with ID-number ID if it exists in the newsgroup, else 0.
   const Article& Newsgroup::getArticle(size_t ID) const throw(NoArticleException)
   {
-    article_const_iterator res = articles.find(ID);
+    std::map<size_t, Article>::const_iterator res = articles.find(ID);
 
     if(res == articles.end())
       throw NoArticleException();

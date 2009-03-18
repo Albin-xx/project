@@ -33,7 +33,7 @@ namespace client_server {
     bool operator!=(const Article& rhs);
 
   private:
-    static size_t ID_count;
+//    static size_t ID_count;
 
     // Unique identification number
     size_t ID;

@@ -307,7 +307,7 @@ namespace client_server {
     return ++highestId;
   }
 
-  void DiskDatabase::createArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException) {
+  void DiskDatabase::addArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException) {
     string path = rootPath; 
     path += "/";
     path += sizettostring(newsgroupID);

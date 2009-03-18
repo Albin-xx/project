@@ -36,7 +36,7 @@ namespace client_server {
     virtual std::vector<Article> listArticles(size_t newsgroupID) throw(NoNewsgroupException) = 0;
 
     // Add an article to the specified newsgroup.
-    virtual void createArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException) = 0;
+    virtual void addArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException) = 0;
 
     // Delete an article in the specified newsgroup.
     virtual void deleteArticle(size_t newsgroupID, size_t articleID) throw(NoNewsgroupException, NoArticleException) = 0;

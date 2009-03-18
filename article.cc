@@ -2,7 +2,7 @@
 
 namespace client_server {
 
-  size_t Article::ID_count = 0;  // Initialize the identification number counter
+//  size_t Article::ID_count = 0;  // Initialize the identification number counter
 
   Article::Article(const size_t id, const std::string& title, const std::string& author, const std::string& text)
     : ID(id), title(title), author(author), text(text) {}

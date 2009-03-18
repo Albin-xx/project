@@ -1,5 +1,7 @@
 #include "databaseinterface.h"
 #include "diskdatabase.h"
+#include "database.h"
+#include "util.h"
 #include <utility>
 #include <vector>
 #include <string>
@@ -7,13 +9,28 @@ using namespace std;
 using namespace client_server;
 
 int main(int argc, char* argv[]) {
-  DatabaseInterface* database; 
-  if (argc > 1) {
-    database = new DiskDatabase(argv[1]);
-  } else {
-    database = new DiskDatabase();
+  if(argc < 2)
+  {
+      printf("Usage: databasetest storage directory \n");
+      printf("storage = 0 to use in-memory database, any other number for disk version\n");
+      printf("directory = path to directory where disk version will store information\n");
+      return 0;
   }
-  
+  bool diskversion = static_cast<bool>(stringtosizet(argv[1]));
+  DatabaseInterface* database;
+  if(diskversion)
+  {
+    if (argc > 2) {
+      database = new DiskDatabase(argv[2]);
+    } else {
+      database = new DiskDatabase();
+    }      
+   }
+   else
+   {
+     database = new Database();
+   }
+   
   printf(" ------- NEWSGROUPS --------- \n");
 
   size_t size = database->numberOfNewsgroups();
@@ -72,7 +89,7 @@ int main(int argc, char* argv[]) {
   try {
     printf("Create article with non-existing newsgroup #3\n");
     Article art(string("blub"), string("blab"), string("bleb"));
-    database->createArticle(3,art);
+    database->addArticle(3,art);
     printf("Error, could create an article with a non-existing newsgroup!!!\n");
   } catch (NoNewsgroupException ex) {
     printf("Database threw NoNewsgroupException , as expected!\n");
@@ -80,20 +97,20 @@ int main(int argc, char* argv[]) {
 
   
   printf("Create article with existing newsgroup #0\n");
-  Article art1(string("blub1"), string("blab1"), string("bleb1"));
-  database->createArticle(0,art1);
+  Article art1(1,string("blub1"), string("blab1"), string("bleb1"));
+  database->addArticle(0,art1);
 
   printf("Create article with existing newsgroup #1\n");
-  Article art2(string("blub2"), string("blab2"), string("bleb2"));
-  database->createArticle(1,art2);
+  Article art2(2,string("blub2"), string("blab2"), string("bleb2"));
+  database->addArticle(1,art2);
 
   printf("Create article with existing newsgroup #1\n");
-  Article art3(string("blub3"), string("blab3"), string("bleb3"));
-  database->createArticle(1,art3);
+  Article art3(3,string("blub3"), string("blab3"), string("bleb3"));
+  database->addArticle(1,art3);
 
   printf("Create article with existing newsgroup #1\n");
-  Article art4(string("blub4"), string("blab4"), string("bleb4"));
-  database->createArticle(1,art4);
+  Article art4(4,string("blub4"), string("blab4"), string("bleb4"));
+  database->addArticle(1,art4);
 
   printf("Get first article with id 1 from newsgroup #0\n");
   Article res1 = database->getArticle(0,1);
@@ -156,5 +173,6 @@ int main(int argc, char* argv[]) {
   size = database->numberOfNewsgroups();
   printf("Number of newsgroups %d, expected %d\n", static_cast<int>(size), 0);
   
+  delete database;
   return 0;
 }
