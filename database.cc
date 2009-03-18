@@ -1,5 +1,6 @@
 #include "database.h"
 #include <functional>
+#include <algorithm>
 
 namespace client_server {
 

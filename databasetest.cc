@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     printf("Database threw NewsgroupExistsException, as expected!\n");
   }
   
-
+  
 
 
 
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
 	   (*it).getName().c_str());
     ++it;
   }
-
+  
   printf(" -------- ARTICLES ---------- \n");
   try {
     printf("Get non-existing article with id #1 from existing newsgroup #0\n");
@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
   } else {
     printf("Inserted and fetched article mismatch!\n");
   }
-
+  
   printf("List articles in newsgroup #1\n");
 
   vector<Article> articles = database->listArticles(1);
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
 
   printf("Delete existing article with id #1 from existing newsgroup #0\n");
   database->deleteArticle(0,1);
-
+ 
   printf("Delete newsgroups: (with articles!)\n");
   result = database->listNewsgroups();
   it = result.begin();

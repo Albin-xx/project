@@ -18,6 +18,8 @@ namespace client_server {
 	
   public:
 
+    virtual ~DatabaseInterface() {};
+
     // Return the number of newsgroups in the database
     virtual size_t numberOfNewsgroups() const = 0;
 

@@ -67,6 +67,7 @@ namespace client_server {
       errno = 0;
       printf("An error occured, id: %d\n", pError);
     }
+    
   }
 
   DiskDatabase::~DiskDatabase() {
@@ -87,6 +88,7 @@ namespace client_server {
       errno = 0;
       printf("An error occured, id: %d\n", pError);
     }
+    
     return groups;
   }
 
@@ -116,6 +118,7 @@ namespace client_server {
       errno = 0;
       printf("An error occured, id: %d\n", pError);
     }
+    
     return v;
   }
 
@@ -180,6 +183,7 @@ namespace client_server {
       errno = 0;
       printf("An error occured, id: %d\n", pError);
     }
+    
     return rtr;
   }
 	
@@ -194,7 +198,7 @@ namespace client_server {
       int pError = errno;
       errno = 0;
       if (pError == ENOENT) {
-	 throw NoNewsgroupException();
+	throw NoNewsgroupException();
       } else {
 	printf("An error occured, id: %d\n", pError);
       }
@@ -216,6 +220,7 @@ namespace client_server {
 	  }
 	}
       }
+      
       closedir(newsgroupRoot);
       res = rmdir(path.c_str());
       if (errno || res) {
@@ -268,6 +273,7 @@ namespace client_server {
 	  ifs.close();
 	}
       }
+      
       closedir(newsgroupRoot);
       if (errno) {
 	int pError = errno;
@@ -365,6 +371,7 @@ namespace client_server {
 	      errno = 0;
 	      printf("fatal error occured while deleting article: %d\n", pError);
 	    }
+	    closedir(newsgroupRoot);
 	    return;
 	  }
 	}
@@ -434,7 +441,9 @@ namespace client_server {
 	throw NoArticleException();
       }
     }
-    return *article;
+    Article rtr = *article;
+    delete article;
+    return rtr;
   }
 
 }
