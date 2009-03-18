@@ -88,8 +88,7 @@ int main(int argc, char* argv[]) {
 
   try {
     printf("Create article with non-existing newsgroup #3\n");
-    Article art(string("blub"), string("blab"), string("bleb"));
-    database->addArticle(3,art);
+    database->addArticle(3,string("blub"), string("blab"), string("bleb"));
     printf("Error, could create an article with a non-existing newsgroup!!!\n");
   } catch (NoNewsgroupException ex) {
     printf("Database threw NoNewsgroupException , as expected!\n");
@@ -97,30 +96,25 @@ int main(int argc, char* argv[]) {
 
   
   printf("Create article with existing newsgroup #0\n");
-  Article art1(1,string("blub1"), string("blab1"), string("bleb1"));
-  database->addArticle(0,art1);
+  database->addArticle(0,string("blub1"), string("blab1"), string("bleb1"));
 
   printf("Create article with existing newsgroup #1\n");
-  Article art2(2,string("blub2"), string("blab2"), string("bleb2"));
-  database->addArticle(1,art2);
+  database->addArticle(1,string("blub2"), string("blab2"), string("bleb2"));
 
   printf("Create article with existing newsgroup #1\n");
-  Article art3(3,string("blub3"), string("blab3"), string("bleb3"));
-  database->addArticle(1,art3);
+  database->addArticle(1,string("blub3"), string("blab3"), string("bleb3"));
 
   printf("Create article with existing newsgroup #1\n");
-  Article art4(4,string("blub4"), string("blab4"), string("bleb4"));
-  database->addArticle(1,art4);
+  database->addArticle(1,string("blub4"), string("blab4"), string("bleb4"));
 
   printf("Get first article with id 1 from newsgroup #0\n");
   Article res1 = database->getArticle(0,1);
 
-  if (res1 == art1) {
-    printf("Inserted and fetched article match!\n");
-  } else {
-    printf("Inserted and fetched article mismatch!\n");
-  }
-  
+  printf("Inserted == Returned:\n");
+  printf("Title: blub1 == %s \n", res1.getTitle().c_str());
+  printf("Author: blab1 == %s \n", res1.getAuthor().c_str());
+  printf("Text: bleb1 == %s \n", res1.getText().c_str());
+
   printf("List articles in newsgroup #1\n");
 
   vector<Article> articles = database->listArticles(1);

@@ -6,6 +6,7 @@
 #include "newsgroup.h"
 #include "article.h"
 #include <dirent.h>
+#include <string>
 #include <sys/types.h>
 
 namespace client_server {
@@ -38,7 +39,7 @@ namespace client_server {
 
     std::vector<Article> listArticles(size_t newsgroupID) throw(NoNewsgroupException);
 
-    void addArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException);
+    void addArticle(size_t newsgroupID, const std::string& title, const std::string& author, const std::string& text) throw(NoNewsgroupException);
 
     void deleteArticle(size_t newsgroupID, size_t articleID) throw(NoNewsgroupException, NoArticleException);
 
@@ -47,11 +48,12 @@ namespace client_server {
   private:
     void openRootDirectory(const char* path);
     void setHighestId();
+    void setArticleId(std::string newsgroupPath);
     std::string getNewsgroupPath(size_t id);
     bool newsgroupExists(std::string name);
-    size_t getNextArticleId(std::string newsgroupPath);
     std::string rootPath;
-    size_t highestId;
+    size_t newsgroupId;
+    size_t articleId;
     DIR* root;
   };
 

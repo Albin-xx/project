@@ -4,6 +4,7 @@
 #include <vector>
 #include "newsgroup.h"
 #include "article.h"
+#include <string>
 
 namespace client_server {
 
@@ -38,7 +39,7 @@ namespace client_server {
     virtual std::vector<Article> listArticles(size_t newsgroupID) throw(NoNewsgroupException) = 0;
 
     // Add an article to the specified newsgroup.
-    virtual void addArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException) = 0;
+    virtual void addArticle(size_t newsgroupID, const std::string& title, const std::string& author, const std::string& text) throw(NoNewsgroupException) = 0;
 
     // Delete an article in the specified newsgroup.
     virtual void deleteArticle(size_t newsgroupID, size_t articleID) throw(NoNewsgroupException, NoArticleException) = 0;

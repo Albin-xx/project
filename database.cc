@@ -85,8 +85,10 @@ namespace client_server {
 
 
     // Add an article to the specified newsgroup.
-    void Database::addArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException)
+  void Database::addArticle(size_t newsgroupID, const std::string& title, const std::string& author, const std::string& text) throw(NoNewsgroupException)
     {
+      // FIXME o_O
+      Article article(0, title, author, text);
 	std::map<size_t, Newsgroup>::iterator res = groups.find(newsgroupID);
 
 	if(res == groups.end())

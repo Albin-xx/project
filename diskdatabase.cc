@@ -48,18 +48,46 @@ namespace client_server {
     printf("Working directory \"%s\" opened, database operational!\n", path);
   }
 
+  void DiskDatabase::setArticleId(string newsgroupPath) {
+    struct dirent* entry;
+    DIR* newsgroupRoot = opendir(newsgroupPath.c_str());
+    if (!newsgroupRoot) {
+      int pError = errno;
+      errno = 0;
+      printf("An error occured, id: %d\n", pError);
+    } else {
+      while((entry = readdir(newsgroupRoot))) {
+	if (entry->d_type == DT_REG && entry->d_name[0] != 'n') {
+	  string str(entry->d_name);
+	  size_t id = stringtosizet(str);
+	  if (id > articleId) {
+	    articleId = id;
+	  }
+	}
+      }
+      closedir(newsgroupRoot);
+      if (errno) {
+	int pError = errno;
+	errno = 0;
+	printf("Error occured while fetching highest article id: %d\n", pError);
+      }
+    }
+  }
+
   void DiskDatabase::setHighestId() {
     struct dirent* entry;
-    highestId = 0;
+    newsgroupId = 0;
+    articleId = 0;
     while((entry = readdir(root))) {
       if (entry->d_name[0] != '.' && entry->d_type == DT_DIR) {
 	string str(entry->d_name);
 	size_t sharp = str.find_last_of("#");
 	str.erase(0, ++sharp);
 	size_t id = stringtosizet(str);
-	if (id > highestId) {
-	  highestId = id;
+	if (id > newsgroupId) {
+	  newsgroupId = id;
 	}
+	setArticleId(rootPath + "/" + entry->d_name);
       }
     }
     if (errno) {
@@ -67,7 +95,7 @@ namespace client_server {
       errno = 0;
       printf("An error occured, id: %d\n", pError);
     }
-    
+    ++articleId;
   }
 
   DiskDatabase::~DiskDatabase() {
@@ -129,7 +157,7 @@ namespace client_server {
     rewinddir(root);
     string dirName = rootPath;
     dirName += "/";
-    dirName += sizettostring(highestId);
+    dirName += sizettostring(newsgroupId);
     DIR* prev = opendir(dirName.c_str());
     if(!prev && errno == ENOENT) {
       int res = mkdir(dirName.c_str(), 0700);
@@ -141,7 +169,7 @@ namespace client_server {
 	ofstream ofs((dirName + "/newsgroup").c_str());
 	if (ofs.good()) {
 	  ofs << name;
-	  ++highestId;
+	  ++newsgroupId;
 	} else {
 	  printf("Could not open/create newsgroupdata: %s\n", (dirName + "/newsgroup").c_str());
 	}
@@ -285,35 +313,7 @@ namespace client_server {
     return v;
   }
 
-  size_t DiskDatabase::getNextArticleId(string newsgroupPath) {
-    size_t highestId = 0;
-    struct dirent* entry;
-    DIR* newsgroupRoot = opendir(newsgroupPath.c_str());
-    if (!newsgroupRoot) {
-      int pError = errno;
-      errno = 0;
-      printf("An error occured, id: %d\n", pError);
-    } else {
-      while((entry = readdir(newsgroupRoot))) {
-	if (entry->d_type == DT_REG && entry->d_name[0] != 'n') {
-	  string str(entry->d_name);
-	  size_t id = stringtosizet(str);
-	  if (id > highestId) {
-	    highestId = id;
-	  }
-	}
-      }
-      closedir(newsgroupRoot);
-      if (errno) {
-	int pError = errno;
-	errno = 0;
-	printf("Error occured while fetching highest article id: %d\n", pError);
-      }
-    }
-    return ++highestId;
-  }
-
-  void DiskDatabase::addArticle(size_t newsgroupID, Article& article) throw(NoNewsgroupException) {
+  void DiskDatabase::addArticle(size_t newsgroupID,  const std::string& title, const std::string& author, const std::string& text) throw(NoNewsgroupException) {
     string path = rootPath; 
     path += "/";
     path += sizettostring(newsgroupID);
@@ -329,17 +329,17 @@ namespace client_server {
     }
     closedir(newsgroupRoot);
     errno = 0;
-    size_t id = getNextArticleId(path);
     path += "/";
-    path += sizettostring(id);
+    path += sizettostring(articleId);
     ofstream ofs(path.c_str());
     if (ofs.good()) {
-      ofs << article.getTitle() << "\n";
-      ofs << article.getAuthor() << "\n";
-      ofs << article.getText() << "\n";
+      ofs << title << "\n";
+      ofs << author << "\n";
+      ofs << text << "\n";
     } else {
       printf("Could not open %s for writing, error!\n", path.c_str());
     }
+    ++articleId;
     ofs.close();
   }
 
